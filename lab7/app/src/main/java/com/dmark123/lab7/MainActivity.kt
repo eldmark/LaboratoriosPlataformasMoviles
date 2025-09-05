@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,120 +32,22 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NotificationsScreen()
+                    LazyLoadingNotificationScreen()
                 }
             }
         }
     }
 }
 
-@Composable
-fun NotificationsScreen() {
-    // Estado para las notificaciones
-    var notifications by remember { mutableStateOf(emptyList<Notification>()) }
-    var isLoading by remember { mutableStateOf(true) }
-
-    // Estado para los filtros seleccionados
-    var showGeneral by remember { mutableStateOf(true) }
-    var showNewMeeting by remember { mutableStateOf(true) }
-
-    // Cargar notificaciones al iniciar
-    LaunchedEffect(Unit) {
-        isLoading = true
-        delay(1000) // Simular carga de datos
-        notifications = generateFakeNotifications()
-        isLoading = false
-    }
-
-    // Filtrar notificaciones según los tipos seleccionados
-    val filteredNotifications = notifications.filter { notification ->
-        (showGeneral && notification.type == NotificationType.GENERAL) ||
-                (showNewMeeting && notification.type == NotificationType.NEW_MEETING)
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Título de la pantalla
-        Text(
-            text = "Notificaciones",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp)
-        )
-
-        // Filtros por tipo de notificación
-        Text(
-            text = "Tipos de notificaciones",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
-        )
-
-        Row(modifier = Modifier.padding(horizontal = 16.dp)) {
-            FilterChip(
-                selected = showGeneral,
-                onClick = { showGeneral = !showGeneral },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = "Generales"
-                    )
-                },
-                label = { Text("Generales") }
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            FilterChip(
-                selected = showNewMeeting,
-                onClick = { showNewMeeting = !showNewMeeting },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.DateRange,
-                        contentDescription = "Nuevas Reuniones"
-                    )
-                },
-                label = { Text("Nuevas Reuniones") }
-            )
-        }
-
-        // Mostrar indicador de carga si está cargando
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-        // Mostrar lista de notificaciones o mensaje vacío
-        else if (filteredNotifications.isNotEmpty()) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(filteredNotifications) { notification ->
-                    NotificationItem(notification = notification)
-                }
-            }
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No hay notificaciones para mostrar")
-            }
-        }
-    }
-}
 
 @Composable
 fun NotificationItem(notification: Notification) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = when (notification.type) {
-                NotificationType.GENERAL -> MaterialTheme.colorScheme.primaryContainer
-                NotificationType.NEW_MEETING -> MaterialTheme.colorScheme.secondaryContainer
+            containerColor = if (notification.type == NotificationType.GENERAL) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.tertiaryContainer
             }
         ),
         modifier = Modifier.fillMaxWidth()
@@ -160,6 +61,7 @@ fun NotificationItem(notification: Notification) {
             ) {
                 // Icono según el tipo
                 Icon(
+                    // Asignar el icono correspondiente al tipo de notificación y colores
                     imageVector = when (notification.type) {
                         NotificationType.GENERAL -> Icons.Default.Notifications
                         NotificationType.NEW_MEETING -> Icons.Default.DateRange
@@ -167,6 +69,11 @@ fun NotificationItem(notification: Notification) {
                     contentDescription = when (notification.type) {
                         NotificationType.GENERAL -> "Notificación general"
                         NotificationType.NEW_MEETING -> "Nueva reunión"
+                    },
+                    tint = if (notification.type == NotificationType.GENERAL) {
+                        MaterialTheme.colorScheme.tertiary
+                    } else {
+                        MaterialTheme.colorScheme.primary
                     },
                     modifier = Modifier.size(24.dp)
                 )
@@ -226,7 +133,6 @@ fun LazyLoadingNotificationScreen() {
     // Cargar notificaciones al iniciar
     LaunchedEffect(Unit) {
         isLoading = true
-        delay(1000) // Simular carga de datos
         notifications = generateFakeNotifications()
         isLoading = false
     }
@@ -234,7 +140,6 @@ fun LazyLoadingNotificationScreen() {
     val notificationsToShow = notifications.take(visibleCount)
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Título y filtros (igual que en NotificationsScreen)
         Text(
             text = "Notificaciones",
             style = MaterialTheme.typography.headlineLarge,
